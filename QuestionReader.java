@@ -35,18 +35,21 @@ public class QuestionReader {
 				choices,answers,correct,wrong);
 				questions.add(question);
 			}
-			
-			
-			
+	
 		}catch(FileNotFoundException e) {
 			System.out.println(e.getMessage());
 		}
 	}
 	
+	public Question generateQuestion() {
+		Random rng = new Random();
+		int random = rng.nextInt(questions.size());
+		return questions.get(random);
+	}
+	
 	public static void main(String[] args) {
 		QuestionReader reader = new QuestionReader();
 		reader.readFile();
-		System.out.println((reader.questions.get(7).answers));
-		
+		System.out.println((reader.generateQuestion().answers));
 	}
 }
