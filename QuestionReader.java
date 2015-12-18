@@ -3,9 +3,9 @@ import java.util.*;
 import java.util.regex.*;
 
 public class QuestionReader {
-	List<Question> questions = new ArrayList<>();
+	static List<Question> questions = new ArrayList<>();
 
-	public void readFile(){
+	public static void readFile(){
 		String type,description;
 		int noOfChoices, correct, wrong;
 		String[] choices;
@@ -41,15 +41,14 @@ public class QuestionReader {
 		}
 	}
 	
-	public Question generateQuestion() {
+	public static Question generateQuestion() {
+		readFile();
 		Random rng = new Random();
 		int random = rng.nextInt(questions.size());
 		return questions.get(random);
 	}
 	
 	public static void main(String[] args) {
-		QuestionReader reader = new QuestionReader();
-		reader.readFile();
-		System.out.println((reader.generateQuestion().answers));
+		System.out.println((generateQuestion().answers));
 	}
 }
