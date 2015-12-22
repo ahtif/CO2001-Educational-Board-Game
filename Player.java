@@ -1,9 +1,10 @@
 import java.io.Serializable;
 public class Player implements Serializable{
-	int position, counter;
+	int position;
+	String colour;
 	
-	public Player(int position, int counter) {
+	public Player(int position, String colour) {
 		this.position = position;
-		this.counter = counter;
+		this.colour = colour;
 	}
 }

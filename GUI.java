@@ -8,18 +8,26 @@ public class GUI extends JFrame implements ActionListener{
 	private ArrayList<JButton> choices;
 	private JLabel description;
 	private Container contentPane;
-	private JPanel questionPanel, choicePanel, descriptionPanel, choosePlayers;
-	private JButton doneSelectingPlayers;
-	private JComboBox amtPlayers;
+	private JPanel questionPanel, choicePanel, descriptionPanel, choosePlayers, chooseCounters, turnPanel;
+	private JButton doneSelectingPlayers, doneChoosingColours;
+	private JComboBox amtPlayers, counterBox;
+	private JComboBox[] colourBox;
 	private Question question;
 	private Squares squares;
-	private ArrayList<Player> players;
+	private ArrayList<Player> players = new ArrayList<>();
+	private int noOfPlayers, currentTurn;
+	private HashMap<String,Color> colourMap = new HashMap<>();
 
 	public GUI() {
-		setSize(1200,800);
+		
 		setResizable(false);
 		setTitle("The 11+ Experience");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		colourMap.put("Blue",Color.BLUE);
+		colourMap.put("Green",Color.GREEN);
+		colourMap.put("Orange",Color.ORANGE);
+		colourMap.put("Red",Color.RED);
 
 		contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());	
@@ -28,8 +36,88 @@ public class GUI extends JFrame implements ActionListener{
 	public void actionPerformed(ActionEvent e){
 		JButton clicked = (JButton) e.getSource();
 		if (clicked == doneSelectingPlayers){
+			noOfPlayers = (int) amtPlayers.getSelectedItem();
+			System.out.println(noOfPlayers);
 			choosePlayers.setVisible(false);
+			setCounters(noOfPlayers);
 		}
+		if (clicked == doneChoosingColours) {
+			chooseCounters.setVisible(false);
+			for(int i=0; i<noOfPlayers; i++){
+				Player player = new Player(0,(String) colourBox[i].getSelectedItem());
+				players.add(player);
+			}
+			currentTurn = 0;
+			displayQuestion();
+			drawBoard();
+			displayCurrentTurn();
+			System.out.println("There are " + players.size() + " players.");
+			setSize(1200,800);
+		}
+	}
+
+	public void displayCurrentTurn(){
+		turnPanel = new JPanel();
+		JLabel currentLbl = new JLabel("Player " + (currentTurn+1) + "'s turn");
+		Player currentPlayer = players.get(currentTurn);
+		currentLbl.setForeground(colourMap.get(currentPlayer.colour));
+		turnPanel.add(currentLbl);
+		contentPane.add(turnPanel, BorderLayout.NORTH);
+	}
+
+	public void setCounters(int noOfPlayers){
+		chooseCounters = new JPanel();
+		chooseCounters.setLayout(new BoxLayout(chooseCounters,BoxLayout.Y_AXIS));
+		JLabel chooseColour = new JLabel("Please select your colours:");
+		chooseColour.setBorder(BorderFactory.createEmptyBorder(10,0,10,0));
+		chooseCounters.add(chooseColour);		
+		JPanel[] playerPanels = new JPanel[noOfPlayers];
+		JLabel[] playerLbl = new JLabel[noOfPlayers];
+		colourBox = new JComboBox[noOfPlayers];
+
+
+		for (int i=0; i<noOfPlayers; i++){
+			playerPanels[i] = new JPanel();
+
+			playerLbl[i] = new JLabel("Player "+ (i+1));
+			String[] colourArr = {"Blue","Green","Orange","Red"};
+			colourBox[i] = new JComboBox(colourArr);
+			if (i!=0) 
+				colourBox[i].setEnabled(false);
+			ActionListener colourListener = new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					JComboBox selectedBox = (JComboBox) e.getSource();
+					int index = Arrays.asList(colourBox).indexOf(selectedBox);
+					String selectedColour = (String) selectedBox.getSelectedItem();
+					for (int m=0; m<noOfPlayers; m++) {
+						if(colourBox[m]!=colourBox[index])
+							colourBox[m].removeItem(selectedColour);
+						if(m == index+1)
+							colourBox[m].setEnabled(true);
+
+					}
+				}
+			};
+			colourBox[i].addActionListener(colourListener);
+
+			playerPanels[i].add(playerLbl[i]);
+			playerPanels[i].add(colourBox[i]);
+
+			
+			playerPanels[i].setPreferredSize(new Dimension(300,40));
+
+			chooseCounters.add(playerPanels[i]);
+		}
+
+		doneChoosingColours = new JButton("Done");
+		doneChoosingColours.addActionListener(this);
+
+		chooseCounters.add(Box.createRigidArea(new Dimension(5,5)));
+		chooseCounters.add(doneChoosingColours);
+		chooseCounters.add(Box.createRigidArea(new Dimension(5,5)));
+		contentPane.add(chooseCounters,BorderLayout.CENTER);
+		pack();
 	}
 
 	public void setPlayers(){
