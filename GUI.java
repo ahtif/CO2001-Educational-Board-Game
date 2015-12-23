@@ -5,11 +5,11 @@ import java.util.*;
 
 
 public class GUI extends JFrame implements ActionListener{
-	private ArrayList<JButton> choices;
+	private ArrayList<JToggleButton> choices;
 	private JLabel description;
 	private Container contentPane;
 	private JPanel questionPanel, choicePanel, descriptionPanel, choosePlayers, chooseCounters, turnPanel;
-	private JButton doneSelectingPlayers, doneChoosingColours;
+	private JButton doneSelectingPlayers, doneChoosingColours, submitAnswer;
 	private JComboBox amtPlayers, counterBox;
 	private JComboBox[] colourBox;
 	private Question question;
@@ -19,7 +19,7 @@ public class GUI extends JFrame implements ActionListener{
 	private HashMap<String,Color> colourMap = new HashMap<>();
 
 	public GUI() {
-		
+		setSize(1200,800);
 		setResizable(false);
 		setTitle("The 11+ Experience");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -41,18 +41,35 @@ public class GUI extends JFrame implements ActionListener{
 			choosePlayers.setVisible(false);
 			setCounters(noOfPlayers);
 		}
-		if (clicked == doneChoosingColours) {
+		if (clicked == doneChoosingColours){
 			chooseCounters.setVisible(false);
 			for(int i=0; i<noOfPlayers; i++){
 				Player player = new Player(0,(String) colourBox[i].getSelectedItem());
 				players.add(player);
 			}
 			currentTurn = 0;
-			displayQuestion();
 			drawBoard();
 			displayCurrentTurn();
-			System.out.println("There are " + players.size() + " players.");
+			displayQuestion();
 			setSize(1200,800);
+		}
+		if (clicked == submitAnswer){
+			ArrayList<Integer> selectedAnswers = new ArrayList<>(); 
+			for(int i=0; i<choices.size()-1; i++) {
+				JToggleButton btn = choices.get(i);
+				if(btn.isSelected())
+					selectedAnswers.add(i+1);
+			}
+			Boolean correct = true;
+			if (selectedAnswers.size()==question.answers.size()){
+				for (int m=0; m<question.answers.size(); m++) {
+					if(selectedAnswers.get(m)!=question.answers.get(m))
+						correct = false;
+				}
+			}else
+				correct = false;
+			System.out.println("Your answer is " + correct);
+
 		}
 	}
 
@@ -167,12 +184,27 @@ public class GUI extends JFrame implements ActionListener{
 		question = QuestionReader.generateQuestion();
 		
 		choices = new ArrayList<>();
-		for(int i=0; i<question.choices.length; i++) {
-			choices.add(new JButton(question.choices[i]));
-			choicePanel.add(Box.createRigidArea(new Dimension(5,5)));
-			choicePanel.add(choices.get(i));
-		}		
+		if (question.type.equals("Single Choice")){
+			ButtonGroup btnGroup = new ButtonGroup();
+			for(int i=0; i<question.choices.length; i++) {
+				choices.add(new JToggleButton(question.choices[i]));
+				choicePanel.add(Box.createRigidArea(new Dimension(5,5)));
+				btnGroup.add(choices.get(i));
+				choicePanel.add(choices.get(i));
+			}		
+		}else {
+			for(int i=0; i<question.choices.length; i++) {
+				choices.add(new JToggleButton(question.choices[i]));
+				choicePanel.add(Box.createRigidArea(new Dimension(5,5)));
+				choicePanel.add(choices.get(i));
+			}
+		}
 		
+		submitAnswer = new JButton("Submit");
+		submitAnswer.addActionListener(this);
+		choicePanel.add(Box.createRigidArea(new Dimension(5,10)));
+		choicePanel.add(submitAnswer);
+
 		description = new JLabel("<html>"+question.type + " : <br /><br />" +question.description + "<br /><br /></html>");
 		description.setPreferredSize(new Dimension(200, 100));
 		questionPanel.add(description);
