@@ -2,13 +2,13 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.util.*;
-
+import java.lang.Thread;
 
 public class GUI extends JFrame implements ActionListener{
 	private ArrayList<JToggleButton> choices;
 	private JLabel description;
 	private Container contentPane;
-	private JPanel questionPanel, choicePanel, descriptionPanel, choosePlayers, chooseCounters, turnPanel;
+	private JPanel questionPanel, choicePanel, choosePlayers, chooseCounters, turnPanel;
 	private JButton doneSelectingPlayers, doneChoosingColours, submitAnswer;
 	private JComboBox amtPlayers, counterBox;
 	private JComboBox[] colourBox;
@@ -60,16 +60,40 @@ public class GUI extends JFrame implements ActionListener{
 				if(btn.isSelected())
 					selectedAnswers.add(i+1);
 			}
-			Boolean correct = true;
-			if (selectedAnswers.size()==question.answers.size()){
-				for (int m=0; m<question.answers.size(); m++) {
-					if(selectedAnswers.get(m)!=question.answers.get(m))
-						correct = false;
-				}
-			}else
-				correct = false;
-			System.out.println("Your answer is " + correct);
+			if(selectedAnswers.size()>0){
+				Boolean correct = true;
+				if (selectedAnswers.size()==question.answers.size()){
+					for (int m=0; m<question.answers.size(); m++) {
+						if(selectedAnswers.get(m)!=question.answers.get(m))
+							correct = false;
+					}
+				}else
+					correct = false;
 
+					int currentPos = players.get(currentTurn).position;
+				if (correct) {
+					int moveAmt = question.correct;
+					if (currentPos+moveAmt>29)
+						players.get(currentTurn).position = 29;
+					else
+						players.get(currentTurn).position += moveAmt;
+				} else {
+					int moveAmt = question.wrong;
+					if (currentPos-moveAmt<0)
+						players.get(currentTurn).position = 0;
+					else
+						players.get(currentTurn).position -= moveAmt;
+				}
+				System.out.println("Player "+(currentTurn+1)+"'s position is : "+players.get(currentTurn).position);
+				if (currentTurn+1 >= noOfPlayers) {
+					currentTurn = 0;
+				} else
+					currentTurn++;
+				turnPanel.setVisible(false);
+				questionPanel.setVisible(false);
+				displayCurrentTurn();
+				displayQuestion();
+			}
 		}
 	}
 
@@ -209,7 +233,7 @@ public class GUI extends JFrame implements ActionListener{
 		description.setPreferredSize(new Dimension(200, 100));
 		questionPanel.add(description);
 		questionPanel.add(choicePanel);
-				
+				 
 		contentPane.add(questionPanel, BorderLayout.EAST);
 	}
 	
