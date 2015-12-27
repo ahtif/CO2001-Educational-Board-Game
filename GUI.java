@@ -13,9 +13,10 @@ public class GUI extends JFrame implements ActionListener{
 	private JComboBox amtPlayers, counterBox;
 	private JComboBox[] colourBox;
 	private Question question;
-	private Squares squares;
+	private Board board;
 	private ArrayList<Player> players = new ArrayList<>();
-	private int noOfPlayers, currentTurn;
+	private int noOfPlayers;
+	private int currentTurn = 0;
 	private HashMap<String,Color> colourMap = new HashMap<>();
 
 	public GUI() {
@@ -37,7 +38,6 @@ public class GUI extends JFrame implements ActionListener{
 		JButton clicked = (JButton) e.getSource();
 		if (clicked == doneSelectingPlayers){
 			noOfPlayers = (int) amtPlayers.getSelectedItem();
-			System.out.println(noOfPlayers);
 			choosePlayers.setVisible(false);
 			setCounters(noOfPlayers);
 		}
@@ -47,15 +47,15 @@ public class GUI extends JFrame implements ActionListener{
 				Player player = new Player(0,(String) colourBox[i].getSelectedItem());
 				players.add(player);
 			}
-			currentTurn = 0;
 			drawBoard();
+			initialisePlayers();
 			displayCurrentTurn();
 			displayQuestion();
 			setSize(1200,800);
 		}
 		if (clicked == submitAnswer){
 			ArrayList<Integer> selectedAnswers = new ArrayList<>(); 
-			for(int i=0; i<choices.size()-1; i++) {
+			for(int i=0; i<choices.size(); i++) {
 				JToggleButton btn = choices.get(i);
 				if(btn.isSelected())
 					selectedAnswers.add(i+1);
@@ -67,10 +67,11 @@ public class GUI extends JFrame implements ActionListener{
 						if(selectedAnswers.get(m)!=question.answers.get(m))
 							correct = false;
 					}
-				}else
+				}else{
 					correct = false;
+				}
 
-					int currentPos = players.get(currentTurn).position;
+				int currentPos = players.get(currentTurn).position;
 				if (correct) {
 					int moveAmt = question.correct;
 					if (currentPos+moveAmt>29)
@@ -84,7 +85,8 @@ public class GUI extends JFrame implements ActionListener{
 					else
 						players.get(currentTurn).position -= moveAmt;
 				}
-				System.out.println("Player "+(currentTurn+1)+"'s position is : "+players.get(currentTurn).position);
+				drawPlayers();
+				
 				if (currentTurn+1 >= noOfPlayers) {
 					currentTurn = 0;
 				} else
@@ -93,6 +95,7 @@ public class GUI extends JFrame implements ActionListener{
 				questionPanel.setVisible(false);
 				displayCurrentTurn();
 				displayQuestion();
+				
 			}
 		}
 	}
@@ -181,21 +184,59 @@ public class GUI extends JFrame implements ActionListener{
 	}
 
 	public void drawBoard(){
-		Squares squares = new Squares();
-	    contentPane.add(squares,BorderLayout.CENTER);
+		board = new Board();
+	    contentPane.add(board,BorderLayout.CENTER);
 	    for (int i = 0; i < 9; i++) {
-	   		squares.addSquare(i * 100, 0, 80, 80);
+	   		board.addSquare(i * 100, 0, 80, 80);
 	    }
-	    squares.addSquare(800, 100, 80, 80);
+	    board.addSquare(800, 100, 80, 80);
 
 	    for (int i = 8; i >= 0; i--) {
-	   		squares.addSquare(i * 100, 200, 80, 80);
+	   		board.addSquare(i * 100, 200, 80, 80);
 	    }
-	    squares.addSquare(0, 300, 80, 80);
+	    board.addSquare(0, 300, 80, 80);
 	    for (int i = 0; i < 9; i++) {
-	   		squares.addSquare(i * 100, 400, 80, 80);
+	   		board.addSquare(i * 100, 400, 80, 80);
 	    }
-	    squares.addSquare(800, 500, 80, 80);	    
+	    board.addSquare(800, 500, 80, 80);	    
+	}
+
+	public void initialisePlayers(){
+		for(int i=0; i<noOfPlayers; i++){
+			Player currentPlayer = players.get(i);
+			Color playerColor = colourMap.get(currentPlayer.colour);
+			
+			switch (i) {
+				case 0: board.addCircle(5,5,20,20,playerColor);
+						break;
+				case 1: board.addCircle(50,5,20,20,playerColor);
+						break;
+				case 2: board.addCircle(5,50,20,20,playerColor);
+						break;
+				case 3: board.addCircle(50,50,20,20,playerColor);
+						break;
+			}
+		}
+	}
+
+	public void drawPlayers(){
+		for (int i=0; i<noOfPlayers; i++){
+			Player currentPlayer = players.get(i);
+			int position = currentPlayer.position;
+			Rectangle currentSquare = board.squares.get(position);
+		 	int x = (int) currentSquare.getX();
+		 	int y = (int) currentSquare.getY();
+			switch (i) {
+				case 0: board.updateCircle(i, x+5, y+5);
+						break;
+				case 1: board.updateCircle(i, x+50, y+5);
+						break;
+				case 2: board.updateCircle(i, x+5, y+50);
+						break;
+				case 3: board.updateCircle(i, x+50, y+50);
+						break;
+			}
+		}
 	}
 
 	public void displayQuestion(){
@@ -205,6 +246,7 @@ public class GUI extends JFrame implements ActionListener{
 		choicePanel = new JPanel();
 		choicePanel.setLayout(new BoxLayout(choicePanel,BoxLayout.Y_AXIS));
 		
+		question = null;
 		question = QuestionReader.generateQuestion();
 		
 		choices = new ArrayList<>();

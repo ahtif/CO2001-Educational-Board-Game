@@ -9,14 +9,25 @@ import java.util.List;
 import javax.swing.*;
 
 
-public class Squares extends JPanel {
+public class Board extends JPanel {
    private static final int PREF_W = 500;
    private static final int PREF_H = PREF_W;
-   private List<Rectangle> squares = new ArrayList<Rectangle>();
+   List<Rectangle> squares = new ArrayList<Rectangle>();
+   List<Oval> circles = new ArrayList<Oval>();
 
    public void addSquare(int x, int y, int width, int height) {
       Rectangle rect = new Rectangle(x, y, width, height);
       squares.add(rect);
+   }
+
+   public void addCircle(int x, int y, int width, int height, Color colour){
+      Oval circ = new Oval(x,y,width,height,colour);
+      circles.add(circ);
+   }
+
+   public void updateCircle(int index, int x, int y) {
+      circles.get(index).updateX(x);
+      circles.get(index).updateY(y);
    }
 
    @Override
@@ -30,8 +41,11 @@ public class Squares extends JPanel {
       Graphics2D g2 = (Graphics2D) g;
       for (Rectangle rect : squares) {
          g2.setColor(new Color(33,199,205));
-         //g2.draw(rect);
          g2.fillRect((int)rect.getX(), (int)rect.getY(), (int)rect.getWidth(), (int)rect.getHeight());
+      }    
+      for (Oval circle : circles){
+         g2.setColor(circle.getColour());
+         g2.fillOval(circle.getX(),circle.getY(),circle.getWidth(),circle.getHeight());
       }
    }
 
