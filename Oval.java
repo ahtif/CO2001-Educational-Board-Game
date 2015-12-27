@@ -1,11 +1,22 @@
+import java.awt.Color;
 public class Oval {
 	int x,y,width,height;
+	Color colour;
 
-	public Oval(int x, int y, int width, int height){
+	public Oval(int x, int y, int width, int height, Color colour){
 		this.x = x;
 		this.y = y;
 		this.width = width;
 		this.height = height;
+		this.colour = colour;
+	}
+
+	public void updateX(int x){
+		this.x = x;
+	}
+
+	public void updateY(int y){
+		this.y = y;
 	}
 
 	public int getX() {
@@ -23,4 +34,9 @@ public class Oval {
 	public int getHeight() {
 		return height;
 	}
+
+	public Color getColour() {
+		return colour;
+	}
+
 }
