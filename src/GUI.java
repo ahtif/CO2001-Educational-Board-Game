@@ -2,13 +2,12 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.util.*;
-import java.lang.Thread;
 
 public class GUI extends JFrame implements ActionListener{
 	private ArrayList<JToggleButton> choices;
 	private JLabel description;
 	private Container contentPane;
-	private JPanel questionPanel, choicePanel, choosePlayers, chooseCounters, turnPanel;
+	private JPanel questionPanel, choicePanel, choosePlayers, chooseCounters, turnPanel; 
 	private JButton doneSelectingPlayers, doneChoosingColours, submitAnswer;
 	private JComboBox amtPlayers, counterBox;
 	private JComboBox[] colourBox;
@@ -18,6 +17,10 @@ public class GUI extends JFrame implements ActionListener{
 	private int noOfPlayers;
 	private int currentTurn = 0;
 	private HashMap<String,Color> colourMap = new HashMap<>();
+	private JMenuBar menuBar;
+	private JMenu fileMenu;
+	private JMenuItem newGame, saveGame, loadGame;
+	public int state;
 
 	public GUI() {
 		setSize(1200,800);
@@ -32,6 +35,41 @@ public class GUI extends JFrame implements ActionListener{
 
 		contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());	
+
+		menuBar = new JMenuBar();
+		fileMenu = new JMenu("File");
+		newGame = new JMenuItem("New Game");
+		newGame.addActionListener(new MenuListener());
+		saveGame = new JMenuItem("Save Game");
+		loadGame = new JMenuItem("Load Game");
+
+		fileMenu.add(newGame);
+		fileMenu.add(saveGame);
+		fileMenu.add(loadGame);
+
+		menuBar.add(fileMenu);
+		setJMenuBar(menuBar);
+		
+		setPlayers();
+		setVisible(true);
+
+	}
+	
+	class MenuListener implements ActionListener{
+		
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			JMenuItem item = (JMenuItem) e.getSource();
+			if(item.getText().equals("New Game")){
+				String winMessage = "<html><p>Are you sure you want to start a new game?</p></html>" ;
+				int chosenOption = JOptionPane.showConfirmDialog(getParent(), winMessage, "Start a New Game", 0);
+				if (chosenOption == JOptionPane.OK_OPTION){
+					dispose();
+					new GUI();
+				}
+			}
+		}
+		
 	}
 
 	public void actionPerformed(ActionEvent e){
@@ -61,30 +99,9 @@ public class GUI extends JFrame implements ActionListener{
 					selectedAnswers.add(i+1);
 			}
 			if(selectedAnswers.size()>0){
-				Boolean correct = true;
-				if (selectedAnswers.size()==question.answers.size()){
-					for (int m=0; m<question.answers.size(); m++) {
-						if(selectedAnswers.get(m)!=question.answers.get(m))
-							correct = false;
-					}
-				}else{
-					correct = false;
-				}
-
-				int currentPos = players.get(currentTurn).position;
-				if (correct) {
-					int moveAmt = question.correct;
-					if (currentPos+moveAmt>29)
-						players.get(currentTurn).position = 29;
-					else
-						players.get(currentTurn).position += moveAmt;
-				} else {
-					int moveAmt = question.wrong;
-					if (currentPos-moveAmt<0)
-						players.get(currentTurn).position = 0;
-					else
-						players.get(currentTurn).position -= moveAmt;
-				}
+				
+				boolean correct = checkIfCorrect(selectedAnswers);
+				movePlayers(correct);
 				drawPlayers();
 				
 				if (currentTurn+1 >= noOfPlayers) {
@@ -99,14 +116,57 @@ public class GUI extends JFrame implements ActionListener{
 			}
 		}
 	}
-
+	
+	public void finishGame(int playerNo){
+		String winMessage = "<html><p>Congratulations! Player "+playerNo+" has won the game!</p>"
+				+ "<p>Press OK to start a new game or cancel to quit</p></html>" ;
+		int chosenOption = JOptionPane.showConfirmDialog(this, winMessage, "Player "+ playerNo + " Has Won!", 2);
+		if (chosenOption == JOptionPane.OK_OPTION){
+			this.dispose();
+			new GUI();
+		}else{
+			System.exit(1);
+		}
+	}
+	
+	public boolean checkIfCorrect(ArrayList<Integer> selectedAnswers ){
+		Boolean correct = true;
+		if (selectedAnswers.size()==question.answers.size()){
+			for (int m=0; m<question.answers.size(); m++) {
+				if(selectedAnswers.get(m)!=question.answers.get(m))
+					correct = false;
+			}
+		}else{
+			correct = false;
+		}
+		return correct;
+	}
+	
+	public void movePlayers(boolean correct){
+		int currentPos = players.get(currentTurn).position;
+		if (correct) {
+			int moveAmt = question.correct;
+			if (currentPos+moveAmt>=29){
+				players.get(currentTurn).position = 29;
+				finishGame(currentTurn+1);
+			}else
+				players.get(currentTurn).position += moveAmt;
+		} else {
+			int moveAmt = question.wrong;
+			if (currentPos-moveAmt<0)
+				players.get(currentTurn).position = 0;
+			else
+				players.get(currentTurn).position -= moveAmt;
+		}
+	}
+	
 	public void displayCurrentTurn(){
 		turnPanel = new JPanel();
 		JLabel currentLbl = new JLabel("Player " + (currentTurn+1) + "'s turn");
 		Player currentPlayer = players.get(currentTurn);
 		currentLbl.setForeground(colourMap.get(currentPlayer.colour));
 		turnPanel.add(currentLbl);
-		contentPane.add(turnPanel, BorderLayout.NORTH);
+		contentPane.add(turnPanel,BorderLayout.NORTH);
 	}
 
 	public void setCounters(int noOfPlayers){
@@ -281,10 +341,9 @@ public class GUI extends JFrame implements ActionListener{
 	
 	public static void main(String[] args) {
 		GUI gui = new GUI();
-		//gui.displayQuestion();
-		gui.setPlayers();
-		//gui.drawBoard();
-		gui.setVisible(true);
+		//gui.setPlayers();
+		//gui.setVisible(true);
+		
 		
 	}
 	

@@ -13,7 +13,7 @@ public class QuestionReader {
 		Question question; 
 		
 		try{
-			File questionFile = new File("questions.txt");
+			File questionFile = new File("src/files/questions.txt");
 			Scanner scanner = new Scanner(questionFile);
 			while (scanner.hasNext()) {
 				type = scanner.nextLine();
