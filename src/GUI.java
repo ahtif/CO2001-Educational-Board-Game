@@ -1,5 +1,12 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import javax.swing.*;
 import java.util.*;
 
@@ -39,16 +46,19 @@ public class GUI extends JFrame implements ActionListener{
 		menuBar = new JMenuBar();
 		fileMenu = new JMenu("File");
 		newGame = new JMenuItem("New Game");
-		newGame.addActionListener(new MenuListener());
 		saveGame = new JMenuItem("Save Game");
 		loadGame = new JMenuItem("Load Game");
-
+		
+		MenuListener menuListener = new MenuListener();
+		newGame.addActionListener(menuListener);
+		saveGame.addActionListener(menuListener);
+		loadGame.addActionListener(menuListener);
+		
 		fileMenu.add(newGame);
 		fileMenu.add(saveGame);
 		fileMenu.add(loadGame);
 
 		menuBar.add(fileMenu);
-		setJMenuBar(menuBar);
 		
 		setPlayers();
 		setVisible(true);
@@ -60,13 +70,52 @@ public class GUI extends JFrame implements ActionListener{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			JMenuItem item = (JMenuItem) e.getSource();
-			if(item.getText().equals("New Game")){
-				String winMessage = "<html><p>Are you sure you want to start a new game?</p></html>" ;
-				int chosenOption = JOptionPane.showConfirmDialog(getParent(), winMessage, "Start a New Game", 0);
-				if (chosenOption == JOptionPane.OK_OPTION){
+			if(item.equals(newGame)){
+				String message = "<html><p>Are you sure you want to start a new game?</p></html>" ;
+				int chosenOption = JOptionPane.showConfirmDialog(getParent(), message, "Start a New Game", 0);
+				if (chosenOption == JOptionPane.YES_OPTION){
 					dispose();
 					new GUI();
 				}
+			}
+			if(item.equals(saveGame)){
+				showSaveDialog();
+			}
+			if(item.equals(loadGame)){
+				showLoadDialog();
+			}			
+		}
+	}
+
+	private void showLoadDialog() {
+		JFileChooser chooser = new JFileChooser("src/");
+		int chosen = chooser.showOpenDialog(getParent());
+		if (chosen == JFileChooser.APPROVE_OPTION){
+			File file = chooser.getSelectedFile();
+			try {
+				FileInputStream inFileStream = new FileInputStream(file);
+				ObjectInputStream inObjectStream = new ObjectInputStream(inFileStream);
+				ArrayList<Player> loadedPlayers = (ArrayList<Player>) inObjectStream.readObject();
+				inObjectStream.close();
+				System.out.println(loadedPlayers.get(0).colour);
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
+		}
+	}
+	
+	private void showSaveDialog() {
+		JFileChooser chooser = new JFileChooser();
+		int chosen = chooser.showSaveDialog(getParent());
+		if (chosen == JFileChooser.APPROVE_OPTION){
+			File file = chooser.getSelectedFile();
+			try {
+				FileOutputStream outFileStream = new FileOutputStream(file);
+				ObjectOutputStream outObjectStream = new ObjectOutputStream(outFileStream);
+				outObjectStream.writeObject(players);
+				System.out.println("save");
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
 			}
 		}
 		
@@ -86,6 +135,7 @@ public class GUI extends JFrame implements ActionListener{
 				players.add(player);
 			}
 			drawBoard();
+			setJMenuBar(menuBar);
 			initialisePlayers();
 			displayCurrentTurn();
 			displayQuestion();
@@ -287,7 +337,7 @@ public class GUI extends JFrame implements ActionListener{
 		 	int x = (int) currentSquare.getX();
 		 	int y = (int) currentSquare.getY();
 			switch (i) {
-				case 0: board.updateCircle(i, x+5, y+5);
+				case 0: board.updateCircle(i, x+5, y+5);		
 						break;
 				case 1: board.updateCircle(i, x+50, y+5);
 						break;
@@ -341,9 +391,6 @@ public class GUI extends JFrame implements ActionListener{
 	
 	public static void main(String[] args) {
 		GUI gui = new GUI();
-		//gui.setPlayers();
-		//gui.setVisible(true);
-		
 		
 	}
 	
