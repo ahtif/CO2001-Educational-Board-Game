@@ -8,13 +8,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.EtchedBorder;
+
 import java.util.*;
 
 public class GUI extends JFrame implements ActionListener{
 	private ArrayList<JToggleButton> choices;
 	private JLabel description;
 	private Container contentPane;
-	private JPanel questionPanel, choicePanel, choosePlayers, chooseCounters, turnPanel; 
+	private JPanel questionPanel, choicePanel, choosePlayers, chooseCounters, turnPanel, startPanel; 
 	private JButton doneSelectingPlayers, doneChoosingColours, submitAnswer;
 	private JComboBox amtPlayers, counterBox;
 	private JComboBox[] colourBox;
@@ -27,7 +30,7 @@ public class GUI extends JFrame implements ActionListener{
 	private JMenuBar menuBar;
 	private JMenu fileMenu;
 	private JMenuItem newGame, saveGame, loadGame;
-	public int state;
+	private PlayerSerializer gameSaver = new PlayerSerializer();
 
 	public GUI() {
 		setSize(1200,800);
@@ -42,6 +45,7 @@ public class GUI extends JFrame implements ActionListener{
 
 		contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());	
+
 
 		menuBar = new JMenuBar();
 		fileMenu = new JMenu("File");
@@ -59,9 +63,6 @@ public class GUI extends JFrame implements ActionListener{
 		fileMenu.add(loadGame);
 
 		menuBar.add(fileMenu);
-		
-		setPlayers();
-		setVisible(true);
 
 	}
 	
@@ -69,56 +70,111 @@ public class GUI extends JFrame implements ActionListener{
 		
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			JMenuItem item = (JMenuItem) e.getSource();
-			if(item.equals(newGame)){
+			String text;
+			if(e.getSource() instanceof JMenuItem){
+				JMenuItem item = (JMenuItem) e.getSource();
+				text = item.getText();
+			} else {
+				JButton item = (JButton) e.getSource();
+				text = item.getText();
+			}
+			
+			if(text.equals("New Game")&& (e.getSource() instanceof JMenuItem)){
 				String message = "<html><p>Are you sure you want to start a new game?</p></html>" ;
 				int chosenOption = JOptionPane.showConfirmDialog(getParent(), message, "Start a New Game", 0);
 				if (chosenOption == JOptionPane.YES_OPTION){
 					dispose();
-					new GUI();
+					GUI newGame = new GUI();
+					newGame.setPlayers();
+					newGame.setVisible(true);
 				}
 			}
-			if(item.equals(saveGame)){
+			if(text.equals("New Game")&& (e.getSource() instanceof JButton)){
+				dispose();
+				GUI newGame = new GUI();
+				newGame.setPlayers();
+				newGame.setVisible(true);
+			}
+			if(text.equals("Save Game")){
 				showSaveDialog();
 			}
-			if(item.equals(loadGame)){
+			if(text.equals("Load Game")){
 				showLoadDialog();
 			}			
 		}
 	}
 
 	private void showLoadDialog() {
-		JFileChooser chooser = new JFileChooser("src/");
+		JFileChooser chooser = new JFileChooser("../");
 		int chosen = chooser.showOpenDialog(getParent());
 		if (chosen == JFileChooser.APPROVE_OPTION){
 			File file = chooser.getSelectedFile();
 			try {
-				FileInputStream inFileStream = new FileInputStream(file);
-				ObjectInputStream inObjectStream = new ObjectInputStream(inFileStream);
-				ArrayList<Player> loadedPlayers = (ArrayList<Player>) inObjectStream.readObject();
-				inObjectStream.close();
-				System.out.println(loadedPlayers.get(0).colour);
+				ArrayList<Player> loadedPlayers = gameSaver.loadPlayers(file.getAbsolutePath());
+				loadGame(loadedPlayers);
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 			}
 		}
 	}
 	
+	private void loadGame(ArrayList<Player> loadedPlayers) {
+		this.dispose();
+		GUI newGame = new GUI();
+		newGame.players = loadedPlayers;
+		newGame.currentTurn = 0;
+		newGame.noOfPlayers = loadedPlayers.size();
+		newGame.drawBoard();
+		newGame.initialisePlayers();
+		newGame.drawPlayers();
+		newGame.displayCurrentTurn();
+		newGame.displayQuestion();
+		newGame.setJMenuBar(newGame.menuBar);
+		newGame.setSize(1200,800);
+		newGame.setVisible(true);
+		
+	}	
+	
 	private void showSaveDialog() {
-		JFileChooser chooser = new JFileChooser();
+		
+		
+		JFileChooser chooser = new JFileChooser("../");
 		int chosen = chooser.showSaveDialog(getParent());
 		if (chosen == JFileChooser.APPROVE_OPTION){
 			File file = chooser.getSelectedFile();
 			try {
-				FileOutputStream outFileStream = new FileOutputStream(file);
-				ObjectOutputStream outObjectStream = new ObjectOutputStream(outFileStream);
-				outObjectStream.writeObject(players);
-				System.out.println("save");
-			} catch (IOException e) {
+				gameSaver.savePlayers(players, file.getAbsolutePath());
+			} catch (Exception e) {
 				System.out.println(e.getMessage());
 			}
 		}
 		
+	}
+	
+	public void gameStart(){
+		startPanel = new JPanel();
+		setSize(400,100);
+		startPanel.setLayout(new BoxLayout(startPanel,BoxLayout.Y_AXIS));
+		JPanel txtPanel = new JPanel();
+		JLabel welcome = new JLabel("Welcome to the 11+ Experience");
+		txtPanel.add(welcome);
+		
+		JPanel btnPanel = new JPanel();
+		
+		JButton newGame = new JButton("New Game");
+		JButton loadGame = new JButton("Load Game");
+		
+		MenuListener menuListener = new MenuListener();
+		newGame.addActionListener(menuListener);
+		loadGame.addActionListener(menuListener);
+		
+		btnPanel.add(newGame);
+		btnPanel.add(loadGame);
+		
+		startPanel.add(txtPanel);
+		startPanel.add(btnPanel);
+		
+		contentPane.add(startPanel, BorderLayout.CENTER);
 	}
 
 	public void actionPerformed(ActionEvent e){
@@ -297,18 +353,19 @@ public class GUI extends JFrame implements ActionListener{
 		board = new Board();
 	    contentPane.add(board,BorderLayout.CENTER);
 	    for (int i = 0; i < 9; i++) {
-	   		board.addSquare(i * 100, 0, 80, 80);
+	   		board.addSquare((i * 100)+10, 10, 80, 80);
 	    }
-	    board.addSquare(800, 100, 80, 80);
+	    board.addSquare(810, 110, 80, 80);
 
 	    for (int i = 8; i >= 0; i--) {
-	   		board.addSquare(i * 100, 200, 80, 80);
+	   		board.addSquare((i * 100)+10, 210, 80, 80);
 	    }
-	    board.addSquare(0, 300, 80, 80);
+	    board.addSquare(10, 310, 80, 80);
 	    for (int i = 0; i < 9; i++) {
-	   		board.addSquare(i * 100, 400, 80, 80);
+	   		board.addSquare((i * 100)+10, 410, 80, 80);
 	    }
-	    board.addSquare(800, 500, 80, 80);	    
+	    board.addSquare(810, 510, 80, 80);	  
+	    
 	}
 
 	public void initialisePlayers(){
@@ -317,13 +374,13 @@ public class GUI extends JFrame implements ActionListener{
 			Color playerColor = colourMap.get(currentPlayer.colour);
 			
 			switch (i) {
-				case 0: board.addCircle(5,5,20,20,playerColor);
+				case 0: board.addCircle(15,15,20,20,playerColor);
 						break;
-				case 1: board.addCircle(50,5,20,20,playerColor);
+				case 1: board.addCircle(60,15,20,20,playerColor);
 						break;
-				case 2: board.addCircle(5,50,20,20,playerColor);
+				case 2: board.addCircle(15,60,20,20,playerColor);
 						break;
-				case 3: board.addCircle(50,50,20,20,playerColor);
+				case 3: board.addCircle(60,60,20,20,playerColor);
 						break;
 			}
 		}
@@ -391,7 +448,8 @@ public class GUI extends JFrame implements ActionListener{
 	
 	public static void main(String[] args) {
 		GUI gui = new GUI();
-		
+		gui.gameStart();
+		gui.setVisible(true);
 	}
 	
 }
