@@ -110,20 +110,20 @@ public class GUI extends JFrame implements ActionListener{
 		if (chosen == JFileChooser.APPROVE_OPTION){
 			File file = chooser.getSelectedFile();
 			try {
-				ArrayList<Player> loadedPlayers = gameSaver.loadPlayers(file.getAbsolutePath());
-				loadGame(loadedPlayers);
+				GameState loadedState = gameSaver.loadState(file.getAbsolutePath());
+				loadGame(loadedState);
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 			}
 		}
 	}
 	
-	private void loadGame(ArrayList<Player> loadedPlayers) {
+	private void loadGame(GameState loadedState) {
 		this.dispose();
 		GUI newGame = new GUI();
-		newGame.players = loadedPlayers;
-		newGame.currentTurn = 0;
-		newGame.noOfPlayers = loadedPlayers.size();
+		newGame.players = loadedState.players;
+		newGame.currentTurn = loadedState.currentPlayer;
+		newGame.noOfPlayers = loadedState.players.size();
 		newGame.drawBoard();
 		newGame.initialisePlayers();
 		newGame.drawPlayers();
@@ -143,7 +143,8 @@ public class GUI extends JFrame implements ActionListener{
 		if (chosen == JFileChooser.APPROVE_OPTION){
 			File file = chooser.getSelectedFile();
 			try {
-				gameSaver.savePlayers(players, file.getAbsolutePath());
+				GameState state = new GameState(players, currentTurn);
+				gameSaver.saveState(state, file.getAbsolutePath());
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 			}
